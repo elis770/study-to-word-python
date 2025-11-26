@@ -1,26 +1,15 @@
 {"date": "2025-11-26",
- 
-"timezone": "America/Halifax",
- 
-"calendar_items": 
-[{"title": {"en": "Parashat Hashavua",
+ "timezone": "America/Halifax",
+ "calendar_items": [{"title": {"en": "Parashat Hashavua",
  "he": "פרשת השבוע"},
- 
-"displayValue": {"en": "Vayetzei",
+ "displayValue": {"en": "Vayetzei",
  "he": "ויצא"},
- 
-"url": "Genesis.28.10-32.3",
- 
-"ref": "Genesis 28:10-32:3",
- 
-"heRef": "בראשית כ״ח:י׳-ל״ב:ג׳",
- 
-"order": 1,
- 
-"category": "Tanakh",
- 
-"extraDetails": 
-{"aliyot": ["Genesis 28:10-28:22",
+ "url": "Genesis.28.10-32.3",
+ "ref": "Genesis 28:10-32:3",
+ "heRef": "בראשית כ״ח:י׳-ל״ב:ג׳",
+ "order": 1,
+ "category": "Tanakh",
+ "extraDetails": {"aliyot": ["Genesis 28:10-28:22",
  "Genesis 29:1-29:17",
  "Genesis 29:18-30:13",
  "Genesis 30:14-30:27",
@@ -28,8 +17,7 @@
  "Genesis 31:17-31:42",
  "Genesis 31:43-32:3",
  "Genesis 32:1-32:3"]},
- 
-"description": {"en": "Vayeitzei (“He Went Out”) opens as Jacob dreams about angels going up and down a ladder,
+ "description": {"en": "Vayeitzei (“He Went Out”) opens as Jacob dreams about angels going up and down a ladder,
  and then continues on his journey toward the home of his uncle Laban. During years of indentured servitude,
  Jacob marries Laban’s daughters Leah and Rachel,
  bearing children with them and with their maidservants,
@@ -38,54 +26,33 @@
  ובו מלאכים עולים בסולם ויורדים בו. יעקב ממשיך בדרכו לבית לבן אחי אימו,
  ושם הוא מכיר את בת דודו רחל ומבקש להתחתן איתה. לבן מסכים בתנאי שיעקב יעבוד אצלו. אחרי שבע שנים לבן מרמה את יעקב ונותן לו את בתו הבכירה לאה במקום את רחל,
  אך לאחר משא ומתן מסכים לתת לו לאישה גם את רחל. לאה ורחל ושפחותיהן בלהה וזלפה יולדות ליעקב ילדים."}},
- 
-{"title": {"en": "Haftarah",
+ {"title": {"en": "Haftarah",
  "he": "הפטרה"},
- 
-"displayValue": {"en": "Hosea 12:13-14:10",
+ "displayValue": {"en": "Hosea 12:13-14:10",
  "he": "הושע י״ב:י״ג-י״ד:י׳"},
- 
-"url": "Hosea.12.13-14.10",
- 
-"ref": "Hosea 12:13-14:10",
- 
-"order": 2,
- 
-"category": "Tanakh"},
- 
-{"title": {"en": "Daf Yomi",
+ "url": "Hosea.12.13-14.10",
+ "ref": "Hosea 12:13-14:10",
+ "order": 2,
+ "category": "Tanakh"},
+ {"title": {"en": "Daf Yomi",
  "he": "דף יומי"},
- 
-"displayValue": {"en": "Zevachim 73",
+ "displayValue": {"en": "Zevachim 73",
  "he": "זבחים ע״ג"},
- 
-"url": "Zevachim.73",
- 
-"ref": "Zevachim 73",
- 
-"order": 3,
- 
-"category": "Talmud"},
- 
-{"title": {"en": "929",
+ "url": "Zevachim.73",
+ "ref": "Zevachim 73",
+ "order": 3,
+ "category": "Talmud"},
+ {"title": {"en": "929",
  "he": "929"},
- 
-"displayValue": {"en": "Exodus 14 (64)",
+ "displayValue": {"en": "Exodus 14 (64)",
  "he": "שמות י״ד (64)"},
- 
-"url": "Exodus.14",
- 
-"ref": "Exodus 14",
- 
-"order": 4,
- 
-"category": "Tanakh"},
- 
-{"title": {"en": "Daily Mishnah",
- 
-"he": "משנה יומית"},
- 
-"displayValue": {"en": "Mishnah Chullin 12:3-4",
+ "url": "Exodus.14",
+ "ref": "Exodus 14",
+ "order": 4,
+ "category": "Tanakh"},
+ {"title": {"en": "Daily Mishnah",
+ "he": "משנה יומית"},
+ "displayValue": {"en": "Mishnah Chullin 12:3-4",
  "he": "משנה חולין י״ב:ג׳-ד׳"},
  "url": "Mishnah_Chullin.12.3-4",
  "ref": "Mishnah Chullin 12:3-4",

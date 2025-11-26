@@ -10,11 +10,11 @@ url = "https://www.sefaria.org/api/calendars"
 response = requests.get(url)
 
 # Parse the JSON response
-data = response.json()  
+data = response.json()
 
 # Retrieve the list of calendar items
 calendar_items = data['calendar_items']
-
+print(calendar_items)
 # Find the dictionary for the "Daily Rambam" and store its reference and display name
 for item in calendar_items:
     if item['title']['en'] == 'Daily Rambam':
