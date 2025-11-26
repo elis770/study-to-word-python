@@ -55,5 +55,3 @@ for line in text:
 doc.build(story)
 
 print("✅ Hebrew PDF created: hebrew_platypus.pdf")
-
-
