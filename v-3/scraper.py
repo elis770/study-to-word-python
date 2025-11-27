@@ -1,168 +1,139 @@
 """
-Módulo de Scraping Web
-Responsabilidad única: Obtener datos de la página web usando Playwright
+Scraper modular de Chabad.org
+Responsabilidad única: Obtener textos en hebreo de varias secciones
 """
+
 from playwright.sync_api import sync_playwright
 from datetime import datetime
 
-# Diccionario de URLs con sus nombres de sección
-# URLS = {
-#     'Chumash': 'https://www.chabad.org/dailystudy/torahreading.asp?tdate={date}#lt=he',
-# }
-URLS = {
-    'Chumash': 'https://www.chabad.org/dailystudy/torahreading.asp?tdate={date}#lt=he',
-    'Tehilim': 'https://www.chabad.org/dailystudy/tehillim.asp?tdate={date}#lt=he',
-    'Tanya': 'https://www.chabad.org/dailystudy/tanya.asp?tdate={date}&commentary=false#lt=he',
-    'Rambam_1_Chapter': 'https://www.chabad.org/dailystudy/rambam.asp?rambamChapters=1&tdate={date}#lt=he',
-    'Rambam_3_Chapters': 'https://www.chabad.org/dailystudy/rambam.asp?rambamChapters=3&tdate={date}#lt=he',
-    'sefer_hamitzvot': 'https://www.chabad.org/dailystudy/seferHamitzvos.asp?tdate={date}&lang=heb',
-    'hayom_yom': 'https://www.chabad.org/dailystudy/hayomyom.asp?tdate={date}',
+# -------------------------------
+# Configuración de URLs y tipos
+# -------------------------------
+BASE_URLS = {
+    'Chumash': 'torahreading',
+    'Tehilim': 'tehillim',
+    'Tanya': 'tanya',
+    'Rambam_1_Chapter': None,  # Se maneja como caso especial
+    'Rambam_3_Chapters': None,  # Se maneja como caso especial
+    'SeferHamitzvot': 'seferHamitzvos',
+    'HayomYom': 'hayomyom'
 }
 
-def scrape_single_url(url, section_name):
+SECTION_TYPE = {
+    "Chumash": "tabla_hebrew",
+    "Tehilim": "tabla_hebrew",
+    "Tanya": "lang_he",
+    "Rambam_1_Chapter": "lang_he",
+    "Rambam_3_Chapters": "lang_he",
+    "SeferHamitzvot": "lang_he",
+    "HayomYom": "hayom_yom"
+}
+
+CLASES_PERMITIDAS = {'co_VerseNum', 'co_VerseText', 'co_RashiTitle', 'co_RashiText'}
+
+# -------------------------------
+# Funciones auxiliares
+# -------------------------------
+def build_url(section, date=None):
     """
-    Hace scraping de una sola URL
-    
-    Args:
-        url (str): URL a scrapear
-        section_name (str): Nombre de la sección
-        
-    Returns:
-        list: Lista de versículos extraídos
+    Genera la URL para una sección y fecha dadas.
+    Maneja Rambam como caso especial según el número de capítulos.
     """
-    print(f"  📄 Scraping {section_name}...")
+    if section in ["Rambam_1_Chapter", "Rambam_3_Chapters"]:
+        chapters = "1" if section == "Rambam_1_Chapter" else "3"
+        return f"https://www.chabad.org/dailystudy/rambam_cdo/rambamChapters/{chapters}#lt=he"
+
+    base_path = BASE_URLS.get(section)
+    if not base_path:
+        raise ValueError(f"Sección desconocida: {section}")
+    if date is None:
+        date = datetime.today()
+    formatted_date = date.strftime("%m/%d/%Y")
+    return f"https://www.chabad.org/dailystudy/{base_path}.asp?tdate={formatted_date}"
+
+def scrape_single_url(url, section_name, section_type):
+    """
+    Scraping de una URL según tipo de sección
+    """
+    print(f"  📄 Scraping {section_name} ({section_type})...")
     print(f"     🔗 {url}")
     
     with sync_playwright() as p:
-        # Ignorar errores de HTTPS para evitar problemas de certificados
         browser = p.chromium.launch(headless=False, args=["--ignore-certificate-errors"])
         page = browser.new_page(ignore_https_errors=True)
-
-        # Capturar logs del navegador (filtrando errores de red ruidosos)
-        page.on("console", lambda msg: print(f"     🔍 [JS]: {msg.text}") if "Failed to load resource" not in msg.text else None)
-
-        page.goto(url, wait_until="domcontentloaded")
-
-        # Estrategia de selectores múltiples
-        # 1. Tablas específicas (Chumash/Tehilim)
-        # 2. div.hayom-yom-info
-        # 3. span[lang="he"]
-        # 4. Elementos con dir="rtl"
         
-        verses = page.evaluate("""() => {
+        page.on("console", lambda msg: print(f"     🔍 [JS]: {msg.text}") if "Failed to load resource" not in msg.text else None)
+        page.goto(url, wait_until="domcontentloaded")
+        
+        verses = page.evaluate(f"""() => {{
             const results = [];
             const seen = new Set();
+            function addText(text) {{
+                const cleanText = text.trim();
+                if (cleanText && !seen.has(cleanText)) {{
+                    results.push(cleanText);
+                    seen.add(cleanText);
+                }}
+            }}
 
-            function addText(text) {
-    const cleanText = text.trim();
-    if (cleanText && !seen.has(cleanText)) {
-        results.push(cleanText);
-        seen.add(cleanText);
-    }
-}
+            const section_type = "{section_type}";
+            const clasesPermitidas = new Set({list(CLASES_PERMITIDAS)});
 
-// Definimos las clases permitidas
-const clasesPermitidas = new Set(['co_VerseNum', 'co_VerseText', 'co_RashiTitle', 'co_RashiText']);
-
-// 1. Buscar en tablas específicas (Chumash)
- if (results.length === 0){
-    const tdsHebrew = document.querySelectorAll('td.hebrew');
-    tdsHebrew.forEach((td) => {
-        // Seleccionamos SOLO los <span> con una de las clases permitidas
-        const spansValidos = Array.from(td.querySelectorAll('span')).filter(span => {
-            const spanClasses = new Set(span.classList);
-            return [...clasesPermitidas].some(clase => spanClasses.has(clase));
-        });
-
-        // Extraemos y unimos el texto de los spans válidos
-        const spansText = spansValidos
-            .map(span => span.innerText.trim())
-            .filter(texto => texto !== '') // Opcional: eliminar spans con texto vacío
-            .join(' ');
-
-        if (spansText) {
-            addText(spansText);
-        } else {
-            console.log("      ⚠️ Texto vacío / no válido");
-        }
-    });
-
-    console.log("📦 Total acumulado en results tras Caso B:", results.length);
-}
-
-
-            // 2. Buscar en hayom-yom-info
-             if (results.length === 0) {
-            document.querySelectorAll('div.hayom-yom-info').forEach(el => addText(el.innerText));
-            }
-            // 3. Si no se encontró nada, buscar en <div dir="rtl">
-if (results.length === 0) {
-    document.querySelectorAll('div[dir="rtl"]').forEach(el => addText(el.innerText));
-}
-            // 4. Buscar spans con lang="he", rambam y tanya
-            if (results.length === 0) {
-            document.querySelectorAll('h2, span[lang="he"]').forEach(el => addText(el.innerText));
-            }
+            if (section_type === "tabla_hebrew") {{
+                document.querySelectorAll('td.hebrew').forEach(td => {{
+                    const spansValidos = Array.from(td.querySelectorAll('span')).filter(span => 
+                        Array.from(span.classList).some(c => clasesPermitidas.has(c))
+                    );
+                    const spansText = spansValidos.map(span => span.innerText.trim()).filter(t => t).join(' ');
+                    if (spansText) addText(spansText);
+                }});
+            }} else if (section_type === "hayom_yom") {{
+                document.querySelectorAll('div.hayom-yom-info').forEach(el => addText(el.innerText));
+            }} else if (section_type === "dir_rtl") {{
+                document.querySelectorAll('div[dir="rtl"]').forEach(el => addText(el.innerText));
+            }} else if (section_type === "lang_he") {{
+                document.querySelectorAll('h2, span[lang="he"]').forEach(el => addText(el.innerText));
+            }}
 
             return results;
-        }""")
-
+        }}""")
+        
         browser.close()
         return verses
 
-
-def scrape_rambam_verses(date=None):
+# -------------------------------
+# Función principal
+# -------------------------------
+def scrape_chabad_verses(date=None):
     """
-    Extrae versículos en hebreo de múltiples páginas de Chabad.org
-    
-    Args:
-        date (datetime): Objeto datetime con la fecha a consultar.
-                        Si es None, usa la fecha de hoy.
-        
-    Returns:
-        dict: Diccionario con los resultados organizados por sección
-              Ejemplo: {
-                  'Tanya': [...],
-                  'Rambam_1_Chapter': [...],
-                  'Rambam_3_Chapters': [...]
-              }
+    Extrae versículos de todas las secciones definidas
     """
-    # Si no se proporciona fecha, usar hoy
     if date is None:
         date = datetime.today()
-    
-    # Formatear fecha en formato MM/DD/YYYY para la URL
     formatted_date = date.strftime("%m/%d/%Y")
     
     print(f"📅 Fecha: {formatted_date}")
-    print(f"🔍 Iniciando scraping de {len(URLS)} secciones...")
-    print()
-    
     results = {}
     
-    # Iterar sobre cada URL
-    for section_name, url_template in URLS.items():
-        url = url_template.format(date=formatted_date)
-        
+    for section_name in BASE_URLS.keys():
+        section_type = SECTION_TYPE.get(section_name, "lang_he")
+        url = build_url(section_name, date)
         try:
-            verses = scrape_single_url(url, section_name)
+            verses = scrape_single_url(url, section_name, section_type)
             results[section_name] = verses
             print(f"     ✓ {len(verses)} versículos extraídos")
         except Exception as e:
             print(f"     ✗ Error: {e}")
             results[section_name] = []
-        
         print()
     
     return results
 
-
+# -------------------------------
+# Ejecución directa
+# -------------------------------
 if __name__ == "__main__":
-    print("🔍 Ejecutando scraper independientemente...")
-    print("Usando la fecha de hoy...")
-    print()
-    
-    data = scrape_rambam_verses()
+    data = scrape_chabad_verses()
     
     print("=" * 50)
     print("Resumen de resultados:")

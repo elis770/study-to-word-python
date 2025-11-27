@@ -7,7 +7,7 @@ Ejecuta el scraping, procesa los datos y abre un shell interactivo
 """
 import sys
 import code
-from scraper import scrape_rambam_verses
+from scraper import scrape_chabad_verses
 from processor import save_to_json, save_to_html, save_raw_output
 
 def get_date():
@@ -40,7 +40,7 @@ def run_pipeline(date):
     # Paso 1: Scraping
     print("📥 Paso 1/2: Ejecutando scraping con Playwright...")
     try:
-        data = scrape_rambam_verses(date)
+        data = scrape_chabad_verses(date)
         total_verses = sum(len(v) for v in data.values())
         print(f"✓ Scraping completado: {total_verses} versículos extraídos en {len(data)} secciones")
     except Exception as e:
@@ -101,7 +101,7 @@ def start_interactive_shell(results):
     print("  • files - Diccionario con rutas de archivos generados")
     print()
     print("Funciones disponibles:")
-    print("  • scrape_rambam_verses(date) - Ejecutar scraping nuevamente")
+    print("  • scrape_chabad_verses(date) - Ejecutar scraping nuevamente")
     print("  • save_to_json(data) - Guardar en JSON")
     print("  • save_to_html(data) - Guardar en HTML")
     print()
@@ -118,7 +118,7 @@ def start_interactive_shell(results):
         "results": results,
         "data": data,
         "files": files,
-        "scrape_rambam_verses": scrape_rambam_verses,
+        "scrape_chabad_verses": scrape_chabad_verses,
         "save_to_json": save_to_json,
         "save_to_html": save_to_html,
         "save_raw_output": save_raw_output,
