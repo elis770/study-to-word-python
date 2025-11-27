@@ -5,21 +5,28 @@ from datetime import datetime
 ORDERS_MAP = {
     1: "parasha",
     2: "haftara",
-    3: "daf_yomi",
-    4: "Tanakh",
-    5: "Mishnah",
     6: "Rambam1",
     7: "Rambam3",
-    8: "Talmud-week",
-    9: "Shuljan Arukh",
-    10: "Arukh HaShulchan Yomi",
-    11: "Tanakh Yomi",
-    12: "Chok LeYisrae",
-    13: "?",
-    14: "?",
     15: "Tanya",
-    16: "Yerushalmi Yomi",
 }
+# ORDERS_MAP = {
+#     1: "parasha",
+#     2: "haftara",
+#     3: "daf_yomi",
+#     4: "Tanakh",
+#     5: "Mishnah",
+#     6: "Rambam1",
+#     7: "Rambam3",
+#     8: "Talmud-week",
+#     9: "Shuljan Arukh",
+#     10: "Arukh HaShulchan Yomi",
+#     11: "Tanakh Yomi",
+#     12: "Chok LeYisrae",
+#     13: "?",
+#     14: "?",
+#     15: "Tanya",
+#     16: "Yerushalmi Yomi",
+# }
 
 def get_sefaria_for_date(date: datetime) -> dict:
     """
