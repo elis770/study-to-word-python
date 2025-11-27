@@ -11,7 +11,7 @@ from datetime import datetime
 # }
 URLS = {
     'Chumash': 'https://www.chabad.org/dailystudy/torahreading.asp?tdate={date}#lt=he',
-    # 'Tehilim': 'https://www.chabad.org/dailystudy/tehillim.asp?tdate={date}#lt=he',
+    'Tehilim': 'https://www.chabad.org/dailystudy/tehillim.asp?tdate={date}#lt=he',
     'Tanya': 'https://www.chabad.org/dailystudy/tanya.asp?tdate={date}&commentary=false#lt=he',
     'Rambam_1_Chapter': 'https://www.chabad.org/dailystudy/rambam.asp?rambamChapters=1&tdate={date}#lt=he',
     'Rambam_3_Chapters': 'https://www.chabad.org/dailystudy/rambam.asp?rambamChapters=3&tdate={date}#lt=he',
@@ -95,7 +95,11 @@ const clasesPermitidas = new Set(['co_VerseNum', 'co_VerseText', 'co_RashiTitle'
              if (results.length === 0) {
             document.querySelectorAll('div.hayom-yom-info').forEach(el => addText(el.innerText));
             }
-            // 3. Buscar spans con lang="he", rambam y tanya
+            // 3. Si no se encontró nada, buscar en <div dir="rtl">
+if (results.length === 0) {
+    document.querySelectorAll('div[dir="rtl"]').forEach(el => addText(el.innerText));
+}
+            // 4. Buscar spans con lang="he", rambam y tanya
             if (results.length === 0) {
             document.querySelectorAll('h2, span[lang="he"]').forEach(el => addText(el.innerText));
             }
