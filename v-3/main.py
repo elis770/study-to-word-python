@@ -25,9 +25,52 @@ def get_date():
     print(result)
     return result
 
-def run_pipeline(date):
+def get_category_selection():
+    """
+    Solicita al usuario que seleccione una categoría para descargar
+    
+    Returns:
+        list: Lista de secciones a scrapear
+    """
+    print()
+    print("=" * 50)
+    print("Seleccione una categoría para descargar:")
+    print("=" * 50)
+    print("1) Tanya (jumesh/tania)")
+    print("2) Rambam - 1 capítulo")
+    print("3) Rambam - 3 capítulos (default)")
+    print("4) Hayom Yom")
+    print("5) Todas las categorías")
+    print()
+    
+    choice = input("Ingrese el número de opción (1-5) [por default es 3]: ").strip()
+    if choice == "":
+        choice = "3"
+    
+    # Mapeo de opciones a secciones
+    if choice == "1":
+        selected = ["Tanya"]
+    elif choice == "2":
+        selected = ["Rambam_1_Chapter"]
+    elif choice == "3":
+        selected = ["Rambam_3_Chapters"]
+    elif choice == "4":
+        selected = ["HayomYom"]
+    elif choice == "5":
+        selected = None  # None significa todas las secciones
+    else:
+        print(f"⚠️  Opción inválida '{choice}', usando default (Rambam 3 capítulos)")
+        selected = ["Rambam_3_Chapters"]
+    
+    return selected
+
+def run_pipeline(date, sections=None):
     """
     Ejecuta el pipeline completo de scraping y procesamiento
+    
+    Args:
+        date: Fecha para el scraping
+        sections: Lista de secciones a scrapear (None = todas)
     
     Returns:
         dict: Diccionario con los resultados y rutas de archivos generados
@@ -40,7 +83,7 @@ def run_pipeline(date):
     # Paso 1: Scraping
     print("📥 Paso 1/2: Ejecutando scraping con Playwright...")
     try:
-        data = scrape_chabad_verses(date)
+        data = scrape_chabad_verses(date, sections=sections)
         total_verses = sum(len(v) for v in data.values())
         print(f"✓ Scraping completado: {total_verses} versículos extraídos en {len(data)} secciones")
     except Exception as e:
@@ -83,59 +126,9 @@ def run_pipeline(date):
         }
     }
 
-
-def start_interactive_shell(results):
-    """
-    Inicia un shell interactivo de Python con los resultados cargados
-    
-    Args:
-        results (dict): Resultados del pipeline
-    """
-    print("=" * 50)
-    print("  🐍 Iniciando Shell Interactivo de Python")
-    print("=" * 50)
-    print()
-    print("Variables disponibles:")
-    print("  • results - Diccionario con todos los resultados")
-    print("  • data - Diccionario con versículos por sección")
-    print("  • files - Diccionario con rutas de archivos generados")
-    print()
-    print("Funciones disponibles:")
-    print("  • scrape_chabad_verses(date) - Ejecutar scraping nuevamente")
-    print("  • save_to_json(data) - Guardar en JSON")
-    print("  • save_to_html(data) - Guardar en HTML")
-    print()
-    print("Escribe 'exit()' o presiona Ctrl+Z + Enter para salir")
-    print("=" * 50)
-    print()
-    
-    # Preparar variables para el shell
-    data = results["data"] if results else {}
-    files = results["files"] if results else {}
-    
-    # Crear un namespace con las variables y funciones útiles
-    local_vars = {
-        "results": results,
-        "data": data,
-        "files": files,
-        "scrape_chabad_verses": scrape_chabad_verses,
-        "save_to_json": save_to_json,
-        "save_to_html": save_to_html,
-        "save_raw_output": save_raw_output,
-    }
-    
-    # Iniciar el shell interactivo
-    code.interact(local=local_vars, banner="")
-
-
 if __name__ == "__main__":
     date = get_date()
-    # Ejecutar el pipeline
-    results = run_pipeline(date)
+    sections = get_category_selection()
     
-    # Iniciar shell interactivo
-    if results:
-        start_interactive_shell(results)
-    else:
-        print("⚠️  El pipeline falló. No se puede iniciar el shell interactivo.")
-        sys.exit(1)
+    # Ejecutar el pipeline
+    results = run_pipeline(date, sections=sections)

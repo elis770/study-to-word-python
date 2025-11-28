@@ -15,17 +15,15 @@ BASE_URLS = {
     'Tanya': 'tanya',
     'Rambam_1_Chapter': None,  # Se maneja como caso especial
     'Rambam_3_Chapters': None,  # Se maneja como caso especial
-    'SeferHamitzvot': 'seferHamitzvos',
     'HayomYom': 'hayomyom'
 }
 
 SECTION_TYPE = {
     "Chumash": "tabla_hebrew",
     "Tehilim": "tabla_hebrew",
-    "Tanya": "lang_he",
-    "Rambam_1_Chapter": "lang_he",
-    "Rambam_3_Chapters": "lang_he",
-    "SeferHamitzvot": "lang_he",
+    "Tanya": "tanya",
+    "Rambam_1_Chapter": "rambam",
+    "Rambam_3_Chapters": "rambam",
     "HayomYom": "hayom_yom"
 }
 
@@ -49,22 +47,19 @@ def build_url(section, date=None):
     if date is None:
         date = datetime.today()
     formatted_date = date.strftime("%m/%d/%Y")
-    return f"https://www.chabad.org/dailystudy/{base_path}.asp?tdate={formatted_date}"
+    return f"https://www.chabad.org/dailystudy/{base_path}.asp?tdate={formatted_date}#lt=he"
 
 def scrape_single_url(url, section_name, section_type):
-    """
-    Scraping de una URL según tipo de sección
-    """
+    """Scraping de una URL según tipo de sección"""
     print(f"  📄 Scraping {section_name} ({section_type})...")
     print(f"     🔗 {url}")
-    
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False, args=["--ignore-certificate-errors"])
         page = browser.new_page(ignore_https_errors=True)
-        
         page.on("console", lambda msg: print(f"     🔍 [JS]: {msg.text}") if "Failed to load resource" not in msg.text else None)
         page.goto(url, wait_until="domcontentloaded")
-        
+
         verses = page.evaluate(f"""() => {{
             const results = [];
             const seen = new Set();
@@ -75,13 +70,11 @@ def scrape_single_url(url, section_name, section_type):
                     seen.add(cleanText);
                 }}
             }}
-
             const section_type = "{section_type}";
             const clasesPermitidas = new Set({list(CLASES_PERMITIDAS)});
-
             if (section_type === "tabla_hebrew") {{
                 document.querySelectorAll('td.hebrew').forEach(td => {{
-                    const spansValidos = Array.from(td.querySelectorAll('span')).filter(span => 
+                    const spansValidos = Array.from(td.querySelectorAll('span')).filter(span =>
                         Array.from(span.classList).some(c => clasesPermitidas.has(c))
                     );
                     const spansText = spansValidos.map(span => span.innerText.trim()).filter(t => t).join(' ');
@@ -89,33 +82,37 @@ def scrape_single_url(url, section_name, section_type):
                 }});
             }} else if (section_type === "hayom_yom") {{
                 document.querySelectorAll('div.hayom-yom-info').forEach(el => addText(el.innerText));
-            }} else if (section_type === "dir_rtl") {{
-                document.querySelectorAll('div[dir="rtl"]').forEach(el => addText(el.innerText));
-            }} else if (section_type === "lang_he") {{
+            }} else if (section_type === "rambam") {{
+                document.querySelectorAll('h2, span[lang="he"]').forEach(el => addText(el.innerText));
+            }} else if (section_type === "tanya") {{
                 document.querySelectorAll('h2, span[lang="he"]').forEach(el => addText(el.innerText));
             }}
-
             return results;
         }}""")
-        
         browser.close()
         return verses
 
-# -------------------------------
-# Función principal
-# -------------------------------
-def scrape_chabad_verses(date=None):
+def scrape_chabad_verses(date=None, sections=None):
     """
-    Extrae versículos de todas las secciones definidas
+    Extrae versículos de las secciones especificadas
+    
+    Args:
+        date: Fecha para el scraping (None = hoy)
+        sections: Lista de secciones a scrapear (None = todas)
     """
     if date is None:
         date = datetime.today()
     formatted_date = date.strftime("%m/%d/%Y")
-    
     print(f"📅 Fecha: {formatted_date}")
-    results = {}
     
-    for section_name in BASE_URLS.keys():
+    # Si no se especifican secciones, usar todas
+    if sections is None:
+        sections_to_scrape = list(BASE_URLS.keys())
+    else:
+        sections_to_scrape = sections
+    
+    results = {}
+    for section_name in sections_to_scrape:
         section_type = SECTION_TYPE.get(section_name, "lang_he")
         url = build_url(section_name, date)
         try:
@@ -126,14 +123,33 @@ def scrape_chabad_verses(date=None):
             print(f"     ✗ Error: {e}")
             results[section_name] = []
         print()
-    
     return results
 
 # -------------------------------
 # Ejecución directa
 # -------------------------------
 if __name__ == "__main__":
-    data = scrape_chabad_verses()
+    print("Seleccione una categoría para descargar:")
+    print("1) Tanya (jumesh/tania)")
+    print("2) Rambam - 1 capítulo")
+    print("3) Rambam - 3 capítulos (default)")
+    print("4) Sefer Hamitzvot y Hayom Yom")
+    print("5) Todas las categorías")
+    choice = input("Ingrese el número de opción (1-5) [3]: ").strip()
+    if choice == "":
+        choice = "3"
+    if choice == "1":
+        selected = ["Tanya"]
+    elif choice == "2":
+        selected = ["Rambam_1_Chapter"]
+    elif choice == "3":
+        selected = ["Rambam_3_Chapters"]
+    elif choice == "4":
+        selected = ["HayomYom"]
+    else:
+        selected = None  # Todas las secciones
+    
+    data = scrape_chabad_verses(sections=selected)
     
     print("=" * 50)
     print("Resumen de resultados:")
