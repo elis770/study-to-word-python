@@ -124,38 +124,3 @@ def scrape_chabad_verses(date=None, sections=None):
             results[section_name] = []
         print()
     return results
-
-# -------------------------------
-# Ejecución directa
-# -------------------------------
-if __name__ == "__main__":
-    print("Seleccione una categoría para descargar:")
-    print("1) Tanya (jumesh/tania)")
-    print("2) Rambam - 1 capítulo")
-    print("3) Rambam - 3 capítulos (default)")
-    print("4) Sefer Hamitzvot y Hayom Yom")
-    print("5) Todas las categorías")
-    choice = input("Ingrese el número de opción (1-5) [3]: ").strip()
-    if choice == "":
-        choice = "3"
-    if choice == "1":
-        selected = ["Tanya"]
-    elif choice == "2":
-        selected = ["Rambam_1_Chapter"]
-    elif choice == "3":
-        selected = ["Rambam_3_Chapters"]
-    elif choice == "4":
-        selected = ["HayomYom"]
-    else:
-        selected = None  # Todas las secciones
-    
-    data = scrape_chabad_verses(sections=selected)
-    
-    print("=" * 50)
-    print("Resumen de resultados:")
-    print("=" * 50)
-    for section, verses in data.items():
-        print(f"{section}: {len(verses)} versículos")
-        if verses:
-            print(f"  Primer versículo: {verses[0][:50]}...")
-    print()

@@ -1,15 +1,8 @@
-# main.py
-from detectar_dia import parse_date
-
-"""
-Script Principal - Orquestador del Pipeline de Scraping Rambam
-Ejecuta el scraping, procesa los datos y convierte a Word
-"""
 import sys
+from detectar_dia import parse_date
 from scraper import scrape_chabad_verses
 from processor import save_to_json, save_to_html, save_raw_output
-from scraping_to_word import json_to_word   # ⬅️ AGREGADO
-
+from scraping_to_word import json_to_word
 
 def get_date():
     print("Bienvenido al script de procesamiento de estudios")
@@ -35,9 +28,8 @@ def get_category_selection():
     print("3) Rambam - 3 capítulos (default)")
     print("4) Hayom Yom")
     print("5) Todas")
-    print()
 
-    choice = input("Opción (1-5) [3]: ").strip()
+    choice = input("Opción: ").strip()
     if choice == "":
         choice = "3"
 
@@ -52,12 +44,7 @@ def get_category_selection():
     return mapping.get(choice, ["Rambam_3_Chapters"])
 
 
-def run_pipeline(date, sections=None):
-    print("=" * 50)
-    print("  Pipeline Completo")
-    print("=" * 50)
-
-    # ---------- SCRAPING ----------
+def run_pipeline(date, sections=None, template_path=None):
     print("\n📥 Paso 1/3: Ejecutando scraping...")
     try:
         data = scrape_chabad_verses(date, sections=sections)
@@ -66,48 +53,49 @@ def run_pipeline(date, sections=None):
         print(f"✗ Error scraping: {e}")
         return None
 
-    # ---------- GUARDAR JSON/HTML/RAW ----------
     print("\n📝 Paso 2/3: Guardando archivos...")
     try:
-        raw_file = save_raw_output(data)
-        json_file = save_to_json(data)       # ⬅️ ruta completa
-        html_file = save_to_html(data)
-        print("✓ Archivos JSON/HTML generados")
+        json_file = save_to_json(data)
+        # raw_file = save_raw_output(data)
+        # html_file = save_to_html(data)
+        print("✓ Archivo JSON generado")
     except Exception as e:
         print(f"✗ Error al guardar: {e}")
         return None
 
-    # ---------- WORD ----------
     print("\n📄 Paso 3/3: Generando Word...")
     try:
-        word_file = json_to_word(json_file)   # ⬅️ NUEVO
+        word_file = json_to_word(json_file, date_obj=date, template_path=template_path)
         print("✓ Word generado correctamente")
     except Exception as e:
         print(f"✗ Error generando Word: {e}")
         return None
 
-    print("\n" + "=" * 50)
-    print("  ✓ Pipeline completado")
-    print("=" * 50)
-
     print("\n📄 Archivos generados:")
-    print(f"  • Raw:   {raw_file}")
     print(f"  • JSON:  {json_file}")
-    print(f"  • HTML:  {html_file}")
+    # print(f"  • Raw:   {raw_file}")
+    # print(f"  • HTML:  {html_file}")
     print(f"  • Word:  {word_file}")
 
     return {
         "data": data,
         "files": {
-            "raw": raw_file,
             "json": json_file,
-            "html": html_file,
+            # "raw": raw_file,
+            # "html": html_file,
             "word": word_file,
         }
     }
 
 
 if __name__ == "__main__":
+    template_path = sys.argv[1] if len(sys.argv) > 1 else None
+    
+    if template_path:
+        print(f"📄 Usando plantilla: {template_path}")
+    else:
+        print("⚠️ No se proporcionó plantilla. Se usará configuración por defecto.")
+
     date = get_date()
     sections = get_category_selection()
-    run_pipeline(date, sections=sections)
+    run_pipeline(date, sections=sections, template_path=template_path)

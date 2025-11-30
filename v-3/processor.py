@@ -1,32 +1,14 @@
-"""
-Módulo de Procesamiento de Datos
-Responsabilidad única: Procesar datos y guardarlos en archivos (JSON, HTML)
-"""
 import json
 import os
 
-# Crear carpeta de salida si no existe
 OUTPUT_DIR = "output"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def save_to_json(data, output_file="salida_formateada.json"):
-    """
-    Guarda los versículos en formato JSON compatible con Sefaria API
-    
-    Args:
-        data (dict): Diccionario con secciones y sus versículos
-                     Ejemplo: {'Tanya': [...], 'Rambam_1_Chapter': [...]}
-        output_file (str): Nombre del archivo de salida
-        
-    Returns:
-        str: Ruta del archivo generado
-    """
-    # Crear estructura JSON organizada por secciones
     json_data = {}
     
     for section_name, verses in data.items():
         json_data[section_name] = {
-            "he_vtitle": "Miqra according to the Masorah",
             "he_text": verses
         }
     
