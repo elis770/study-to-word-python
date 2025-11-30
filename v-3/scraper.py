@@ -49,6 +49,7 @@ def build_url(section, date=None):
     formatted_date = date.strftime("%m/%d/%Y")
     return f"https://www.chabad.org/dailystudy/{base_path}.asp?tdate={formatted_date}#lt=he"
 
+
 def scrape_single_url(url, section_name, section_type):
     """Scraping de una URL según tipo de sección"""
     print(f"  📄 Scraping {section_name} ({section_type})...")
@@ -63,15 +64,34 @@ def scrape_single_url(url, section_name, section_type):
         verses = page.evaluate(f"""() => {{
             const results = [];
             const seen = new Set();
+
             function addText(text) {{
                 const cleanText = text.trim();
-                if (cleanText && !seen.has(cleanText)) {{
-                    results.push(cleanText);
-                    seen.add(cleanText);
+
+                // --- Normalización de casos especiales ---
+                if (cleanText.includes("\\n")) {{
+                    const [first, ...rest] = cleanText.split("\\n").map(s => s.trim()).filter(Boolean);
+
+                    // Primera parte = título corto (1–3 letras hebreas)
+                    if (first && first.length >= 1 && first.length <= 3 && rest.length > 0) {{
+                        const rejoined = rest.join(" ");
+                        const finalLine = `${{first}}. ${{rejoined}}`.trim();
+
+                        results.push(finalLine);
+                        seen.add(finalLine);
+
+                        return; 
+                    }}
                 }}
+
+                // Valor normal
+                results.push(cleanText);
+                seen.add(cleanText);
             }}
+
             const section_type = "{section_type}";
             const clasesPermitidas = new Set({list(CLASES_PERMITIDAS)});
+
             if (section_type === "tabla_hebrew") {{
                 document.querySelectorAll('td.hebrew').forEach(td => {{
                     const spansValidos = Array.from(td.querySelectorAll('span')).filter(span =>
@@ -87,10 +107,13 @@ def scrape_single_url(url, section_name, section_type):
             }} else if (section_type === "tanya") {{
                 document.querySelectorAll('h2, span[lang="he"]').forEach(el => addText(el.innerText));
             }}
+
             return results;
         }}""")
+
         browser.close()
         return verses
+
 
 def scrape_chabad_verses(date=None, sections=None):
     """
@@ -112,9 +135,11 @@ def scrape_chabad_verses(date=None, sections=None):
         sections_to_scrape = sections
     
     results = {}
+
     for section_name in sections_to_scrape:
         section_type = SECTION_TYPE.get(section_name, "lang_he")
         url = build_url(section_name, date)
+
         try:
             verses = scrape_single_url(url, section_name, section_type)
             results[section_name] = verses
@@ -122,5 +147,7 @@ def scrape_chabad_verses(date=None, sections=None):
         except Exception as e:
             print(f"     ✗ Error: {e}")
             results[section_name] = []
+
         print()
+
     return results
