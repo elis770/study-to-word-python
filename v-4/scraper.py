@@ -39,7 +39,7 @@ def build_url(section, date=None):
     """
     if section in ["Rambam_1_Chapter", "Rambam_3_Chapters"]:
         chapters = "1" if section == "Rambam_1_Chapter" else "3"
-        return f"https://www.chabad.org/dailystudy/rambam_cdo/rambamChapters/{chapters}"
+        return f"https://www.chabad.org/dailystudy/rambam_cdo/rambamChapters/{chapters}#lt=he"
 
     base_path = BASE_URLS.get(section)
     if not base_path:
@@ -47,7 +47,7 @@ def build_url(section, date=None):
     if date is None:
         date = datetime.today()
     formatted_date = date.strftime("%m/%d/%Y")
-    return f"https://www.chabad.org/dailystudy/{base_path}.asp?tdate={formatted_date}"
+    return f"https://www.chabad.org/dailystudy/{base_path}.asp?tdate={formatted_date}#lt=he"
 
 
 def scrape_single_url(url, section_name, section_type):
