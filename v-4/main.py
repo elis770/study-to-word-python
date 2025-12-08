@@ -1,23 +1,6 @@
 import sys
 import os
-from detectar_dia import parse_date
-from scraper import scrape_chabad_verses
-from processor import save_to_json
-from scraping_to_word import json_to_word
-
-def get_date():
-    print("Bienvenido al script de procesamiento de estudios")
-    print("Ingrese la fecha a consultar:")
-    print("  - Fecha gregoriana (YYYY-MM-DD)")
-    print("  - Fecha hebrea numérica (AAAA-MM-DD, año>5000)")
-    print("  - Palabras clave: hoy, ayer, anteayer, mañana, pasado")
-    print("Deje vacío para usar la fecha de hoy.")
-
-    user_input = input("Fecha: ").strip()
-    date_obj = parse_date(user_input)
-
-import sys
-import os
+import json
 from detectar_dia import parse_date
 from scraper import scrape_chabad_verses
 from processor import save_to_json
@@ -27,110 +10,20 @@ from scraping_to_word import json_to_word
 # LOCALIZATION CONFIGURATION
 # ============================================================
 
-TRANSLATIONS = {
-    "es": {
-        "welcome": "Bienvenido al script de procesamiento de estudios",
-        "enter_date": "Ingrese la fecha a consultar:",
-        "date_format_1": "  - Fecha gregoriana (YYYY-MM-DD)",
-        "date_format_2": "  - Fecha hebrea numérica (AAAA-MM-DD, año>5000)",
-        "date_keywords": "  - Palabras clave: hoy, ayer, anteayer, mañana, pasado",
-        "date_empty": "Deje vacío para usar la fecha de hoy.",
-        "date_prompt": "Fecha: ",
-        "date_selected": "📅 Fecha seleccionada: {}",
-        "category_title": "Seleccione una categoría para descargar:",
-        "cat_1": "1) Chumash/Tanya",
-        "cat_2": "2) Rambam - 1 capítulo",
-        "cat_3": "3) Rambam - 3 capítulos (default)",
-        "cat_4": "4) Hayom Yom",
-        "cat_5": "5) Todas",
-        "option_prompt": "Opción: ",
-        "template_config_title": "CONFIGURACIÓN DEL TEMPLATE DE WORD",
-        "template_instructions": "\n📋 INSTRUCCIONES:\n   1) Proporcione la ruta completa de su archivo .docx template\n   2) Si deja vacío, se usará la configuración por defecto",
-        "template_requirements": "\n📝 CÓMO DEBE ESTAR EL TEMPLATE:\n   • El archivo debe ser un documento Word (.docx)\n   • Puede tener headers, footers, estilos, márgenes personalizados\n   • Puede tener configuración de columnas, orientación, etc.",
-        "template_injection": "\n✅ QUÉ SE VA A INYECTAR:\n   • El texto hebreo extraído del scraping\n   • Se agregará al final del documento existente",
-        "template_untouched": "\n❌ QUÉ NO SE VA A TOCAR:\n   • Headers y footers existentes\n   • Estilos y formatos del template\n   • Configuración de página (márgenes, columnas, etc.)\n   • Cualquier contenido que ya exista en el template",
-        "template_path_prompt": "\nRuta del template (Enter para omitir): ",
-        "template_path_prompt_simple": "Ruta del template (.docx) [Enter para omitir]: ",
-        "using_template": "✓ Usando plantilla: {}",
-        "no_template": "⚠️ No se proporcionó plantilla. Se usará configuración por defecto.",
-        "output_dir_title": "DIRECTORIO DE SALIDA",
-        "output_dir_instructions": "\n📁 Especifique dónde guardar el archivo Word generado:\n   • Proporcione la ruta completa del directorio\n   • Si deja vacío, se guardará en la carpeta 'output'",
-        "output_dir_prompt": "\nDirectorio de salida (Enter para usar 'output'): ",
-        "output_dir_prompt_simple": "Directorio de salida [Enter para usar 'output']: ",
-        "saving_in": "✓ Guardando en: {}",
-        "using_default_output": "✓ Usando directorio por defecto: output",
-        "step_1": "\n📥 Paso 1/3: Ejecutando scraping...",
-        "scraping_ok": "✓ Scraping OK ({} secciones)",
-        "scraping_error": "✗ Error scraping: {}",
-        "step_2": "\n📝 Paso 2/3: Guardando archivos...",
-        "json_generated": "✓ Archivo JSON generado",
-        "save_error": "✗ Error al guardar: {}",
-        "step_3": "\n📄 Paso 3/3: Generando Word...",
-        "word_generated": "✓ Word generado correctamente",
-        "word_error": "✗ Error generando Word: {}",
-        "files_generated": "\n📄 Archivos generados:",
-        "menu_title": "MENÚ PRINCIPAL",
-        "menu_opt_1": "1. Ejecutar programa",
-        "menu_opt_2": "2. Cambiar idioma / Change Language",
-        "menu_opt_3": "3. Salir / Exit",
-        "menu_opt_4": "4. Modo Simple: {}",
-        "simple_on": "ACTIVADO",
-        "simple_off": "DESACTIVADO",
-        "bye": "¡Hasta luego!",
-        "invalid_option": "Opción no válida."
-    },
-    "en": {
-        "welcome": "Welcome to the study processing script",
-        "enter_date": "Enter the date to query:",
-        "date_format_1": "  - Gregorian date (YYYY-MM-DD)",
-        "date_format_2": "  - Hebrew numeric date (YYYY-MM-DD, year>5000)",
-        "date_keywords": "  - Keywords: today, yesterday, tomorrow",
-        "date_empty": "Leave empty to use today's date.",
-        "date_prompt": "Date: ",
-        "date_selected": "📅 Selected date: {}",
-        "category_title": "Select a category to download:",
-        "cat_1": "1) Chumash/Tanya",
-        "cat_2": "2) Rambam - 1 Chapter",
-        "cat_3": "3) Rambam - 3 Chapters (default)",
-        "cat_4": "4) Hayom Yom",
-        "cat_5": "5) All",
-        "option_prompt": "Option: ",
-        "template_config_title": "WORD TEMPLATE CONFIGURATION",
-        "template_instructions": "\n📋 INSTRUCTIONS:\n   1) Provide the full path to your .docx template file\n   2) If left empty, default configuration will be used",
-        "template_requirements": "\n📝 TEMPLATE REQUIREMENTS:\n   • The file must be a Word document (.docx)\n   • It can have custom headers, footers, styles, margins\n   • It can have column settings, orientation, etc.",
-        "template_injection": "\n✅ WHAT WILL BE INJECTED:\n   • The Hebrew text extracted from scraping\n   • It will be appended to the end of the existing document",
-        "template_untouched": "\n❌ WHAT WILL NOT BE TOUCHED:\n   • Existing headers and footers\n   • Template styles and formatting\n   • Page setup (margins, columns, etc.)\n   • Any content already existing in the template",
-        "template_path_prompt": "\nTemplate path (Enter to skip): ",
-        "template_path_prompt_simple": "Template path (.docx) [Enter to skip]: ",
-        "using_template": "✓ Using template: {}",
-        "no_template": "⚠️ No template provided. Using default configuration.",
-        "output_dir_title": "OUTPUT DIRECTORY",
-        "output_dir_instructions": "\n📁 Specify where to save the generated Word file:\n   • Provide the full directory path\n   • If left empty, it will be saved in the 'output' folder",
-        "output_dir_prompt": "\nOutput directory (Enter to use 'output'): ",
-        "output_dir_prompt_simple": "Output directory [Enter to use 'output']: ",
-        "saving_in": "✓ Saving in: {}",
-        "using_default_output": "✓ Using default directory: output",
-        "step_1": "\n📥 Step 1/3: Running scraping...",
-        "scraping_ok": "✓ Scraping OK ({} sections)",
-        "scraping_error": "✗ Scraping error: {}",
-        "step_2": "\n📝 Step 2/3: Saving files...",
-        "json_generated": "✓ JSON file generated",
-        "save_error": "✗ Error saving: {}",
-        "step_3": "\n📄 Step 3/3: Generating Word...",
-        "word_generated": "✓ Word generated successfully",
-        "word_error": "✗ Error generating Word: {}",
-        "files_generated": "\n📄 Generated files:",
-        "menu_title": "MAIN MENU",
-        "menu_opt_1": "1. Execute Program",
-        "menu_opt_2": "2. Change Language / Cambiar idioma",
-        "menu_opt_3": "3. Exit / Salir",
-        "menu_opt_4": "4. Simple Mode: {}",
-        "simple_on": "ON",
-        "simple_off": "OFF",
-        "bye": "Goodbye!",
-        "invalid_option": "Invalid option."
-    }
-}
+def load_translations():
+    """Carga las traducciones desde el archivo JSON"""
+    translations_path = os.path.join(os.path.dirname(__file__), "translations.json")
+    try:
+        with open(translations_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"⚠️ Warning: translations.json not found at {translations_path}")
+        return {"es": {}, "en": {}}
+    except json.JSONDecodeError as e:
+        print(f"⚠️ Warning: Error loading translations.json: {e}")
+        return {"es": {}, "en": {}}
+
+TRANSLATIONS = load_translations()
 
 def get_text(key, lang="es", *args):
     """Retrieves text from the dictionary based on language."""
@@ -240,10 +133,10 @@ def get_output_directory(lang="es", simple_mode=False):
         return "output"
 
 
-def run_pipeline(date, sections=None, category_name="Study", template_path=None, output_dir="output", lang="es"):
+def run_pipeline(date, sections=None, category_name="Study", template_path=None, output_dir="output", lang="es", content_lang="he"):
     print(get_text("step_1", lang))
     try:
-        data = scrape_chabad_verses(date, sections=sections)
+        data = scrape_chabad_verses(date, sections=sections, lang=content_lang)
         print(get_text("scraping_ok", lang, len(data)))
     except Exception as e:
         print(get_text("scraping_error", lang, e))
@@ -289,17 +182,31 @@ def select_language():
 def main_menu():
     current_lang = "es"
     simple_mode = False
+    content_lang = "he"
     
     while True:
         status_text = get_text("simple_on", current_lang) if simple_mode else get_text("simple_off", current_lang)
         
+        # Determinar el texto del idioma del contenido
+        if content_lang == "he":
+            content_lang_text = get_text("content_lang_he", current_lang)
+        elif content_lang == "en":
+            content_lang_text = get_text("content_lang_en", current_lang)
+        else:  # both
+            content_lang_text = get_text("content_lang_both", current_lang)
+        
         print("\n" + "=" * 40)
         print(get_text("menu_title", current_lang))
         print("=" * 40)
+        print("\n" + "x" * 40)
+        print("Sobre la opcion 4, no estuvo funcionando el cambio de idioma, por favor, selecciona la opcion 2 para cambiar el idioma., eso se vera en la proxima actualizacion")
+        print("\n" + "Regarding option 4, the language change wasn’t working. Please select option 2 to change the language. This will be fixed in the next update")
+        print("x" * 40)
         print(get_text("menu_opt_1", current_lang))
         print(get_text("menu_opt_2", current_lang))
-        print(get_text("menu_opt_4", current_lang, status_text))
-        print(get_text("menu_opt_3", current_lang))
+        print(get_text("menu_opt_3", current_lang, status_text))
+        print(get_text("menu_opt_4", current_lang, content_lang_text))
+        print(get_text("menu_opt_5", current_lang))
         
         choice = input(get_text("option_prompt", current_lang)).strip()
         
@@ -309,7 +216,7 @@ def main_menu():
             output_dir = get_output_directory(current_lang, simple_mode)
             date = get_date(current_lang)
             sections, category_name = get_category_selection(current_lang)
-            run_pipeline(date, sections=sections, category_name=category_name, template_path=template_path, output_dir=output_dir, lang=current_lang)
+            run_pipeline(date, sections=sections, category_name=category_name, template_path=template_path, output_dir=output_dir, lang=current_lang, content_lang=content_lang)
             
             input("\nPress Enter to continue..." if current_lang == "en" else "\nPresione Enter para continuar...")
             
@@ -317,13 +224,23 @@ def main_menu():
             current_lang = select_language()
             print(f"Language set to: {current_lang}")
             
-        elif choice == "3":
-            print(get_text("bye", current_lang))
-            break
             
-        elif choice == "4":
+        elif choice == "3":
             simple_mode = not simple_mode
             
+        elif choice == "4":
+            # Ciclar entre he → en → both
+            if content_lang == "he":
+                content_lang = "en"
+                print(get_text("content_lang_warning", current_lang))
+            elif content_lang == "en":
+                content_lang = "both"
+            else:  # both
+                content_lang = "he"
+            
+        elif choice == "5":
+            print(get_text("bye", current_lang))
+            break
         else:
             print(get_text("invalid_option", current_lang))
 

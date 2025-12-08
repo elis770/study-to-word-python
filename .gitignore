@@ -2,3 +2,7 @@
 # Secrets
 token.json
 credentials.json
+
+# v-4 build directories
+v-4/build/
+v-4/dist/
